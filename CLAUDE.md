@@ -3,6 +3,7 @@
 
 @docs/specs.md
 @docs/contributing.md
+@docs/design_system.md
 
 ## MCP Servers
 
