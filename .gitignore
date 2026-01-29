@@ -67,3 +67,8 @@ logs
 
 # Temporary files
 /private/tmp/
+
+# Next.js app
+app/node_modules/
+app/.next/
+app/out/
