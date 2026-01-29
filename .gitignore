@@ -63,6 +63,7 @@ logs
 
 # Claude Code
 .claude/project/
+.mcp.json
 
 # Temporary files
 /private/tmp/
