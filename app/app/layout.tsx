@@ -8,7 +8,7 @@ const geistSans = Geist({
 });
 
 const geistDisplay = Geist({
-  variable: "--font-display",
+  variable: "--font-geist-display",
   subsets: ["latin"],
 });
 
