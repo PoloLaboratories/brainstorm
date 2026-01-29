@@ -222,7 +222,7 @@ All entities must be typed via `src/integrations/supabase/types.ts`. Never use `
 - Public data (like shared concepts) explicitly marked
 
 ### Styling
-- Use Tailwind semantic tokens from `index.css`
+- Use Tailwind semantic tokens from `app/app/globals.css`
 - Never hardcode colors in components
 - Support both light and dark modes
 
@@ -243,7 +243,9 @@ Brainstorm's visual identity is **warm, inviting, and expansive** — reflecting
 
 ### Color Palette
 
-All colors use HSL format and are defined as CSS custom properties in `index.css`. **Never hardcode colors in components.**
+All colors use OKLch format and are defined as CSS custom properties in `app/app/globals.css`. **Never hardcode colors in components.**
+
+> **Canonical Reference:** See [Design System](design_system.md) for the complete, implementation-accurate design system documentation with exact OKLch values.
 
 #### Semantic Tokens (Required)
 ```css
@@ -291,8 +293,9 @@ All colors use HSL format and are defined as CSS custom properties in `index.css
 
 ```typescript
 fontFamily: {
-  sans: ['Inter', 'system-ui', 'sans-serif'],      // Body text
-  display: ['Cal Sans', 'Inter', 'system-ui'],     // Headings, emphasis
+  sans: ['Inter'],                  // Body text, UI elements
+  display: ['Plus Jakarta Sans'],   // Headings, emphasis, page titles
+  mono: ['Geist Mono'],            // Code blocks, technical content
 }
 ```
 
@@ -353,10 +356,11 @@ animate-float         // Subtle floating effect (3s infinite)
 ### Dark Mode
 
 Dark mode uses **warm dark tones**, not pure black:
-- Backgrounds: `30 15% 8%` (warm charcoal)
+- Backgrounds: `oklch(0.20 0.01 50)` (warm charcoal)
 - Reduced contrast for eye comfort
-- Amber remains vibrant but slightly desaturated
+- Amber remains vibrant but slightly desaturated (chroma `0.13` vs `0.15`)
 - Sage shifts to a brighter, more visible tone
+- Triggered via `.dark` class + `@custom-variant dark (&:is(.dark *))`
 
 ### Component Guidelines
 

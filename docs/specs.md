@@ -547,15 +547,9 @@ This enables:
 
 ### 5.1 Color Tokens
 
-All colors use HSL via CSS variables:
+All colors use OKLch via CSS variables defined in `app/app/globals.css`. See [Design System](design_system.md) for the complete token table with exact values.
 
-```css
---primary: /* Main action color */
---secondary: /* Supporting color */
---muted: /* Subdued elements */
---accent: /* Highlights */
---destructive: /* Danger actions */
-```
+Key semantic tokens: `--primary` (amber), `--secondary` (sage), `--muted`, `--accent`, `--destructive`. Brand tokens: `--amber`, `--sage`, `--coral`, `--lavender`. Node tokens: `--node-objective`, `--node-project`, `--node-idea`, `--node-concept`. Status tokens: `--status-exploring`, `--status-deepening`, `--status-resting`, `--status-not-started`.
 
 ### 5.2 Status Colors
 
