@@ -123,3 +123,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Custom gradient text effect for warm amber tones */
+  .text-gradient-warm {
+    @apply bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent;
+  }
+
+  /* Sage gradient background - subtle green tones */
+  .from-sage-50 {
+    --tw-gradient-from: oklch(0.97 0.02 140) var(--tw-gradient-from-position);
+    --tw-gradient-to: oklch(0.97 0.02 140 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+}
