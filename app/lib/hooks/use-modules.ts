@@ -68,3 +68,25 @@ export function useDeleteModule(pathId: string) {
     },
   });
 }
+
+export function useToggleModuleCompleted(pathId: string) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { data, error } = await supabase
+        .from('modules')
+        .update({ completed })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-paths', pathId] });
+    },
+  });
+}
