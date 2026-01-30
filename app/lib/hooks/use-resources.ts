@@ -45,3 +45,25 @@ export function useDeleteResource(pathId: string) {
     },
   });
 }
+
+export function useToggleResourceReviewed(pathId: string) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, reviewed }: { id: string; reviewed: boolean }) => {
+      const { data, error } = await supabase
+        .from('resources')
+        .update({ reviewed })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-paths', pathId] });
+    },
+  });
+}
