@@ -70,9 +70,9 @@ function InlineEdit({ value, onSave, className, multiline, placeholder }: { valu
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 group/edit">
+    <span className={`${multiline ? 'flex' : 'inline-flex'} items-center gap-1.5 group/edit ${multiline ? 'w-full' : ''}`}>
       <span
-        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${className ?? ''}`}
+        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${multiline ? 'flex-1' : ''} ${className ?? ''}`}
         onClick={() => { setDraft(value); setEditing(true); }}
       >
         {value}
