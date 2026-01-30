@@ -1,6 +1,6 @@
 'use client';
 
-import { Layers, Trash2, Plus } from 'lucide-react';
+import { Layers, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from './StatusBadge';
 import { ObjectiveList } from './ObjectiveList';
 import { CreateModuleDialog } from './CreateModuleDialog';
-import { useDeleteModule } from '@/lib/hooks/use-modules';
+import { useDeleteModule, useToggleModuleCompleted } from '@/lib/hooks/use-modules';
 import { Database } from '@/types/database';
 
 type Module = Database['public']['Tables']['modules']['Row'];
@@ -29,6 +29,13 @@ interface ModuleAccordionProps {
 
 export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
   const deleteModule = useDeleteModule(pathId);
+  const toggleCompleted = useToggleModuleCompleted(pathId);
+
+  const moduleRefs = modules.map((m) => ({ id: m.id, title: m.title }));
+
+  function handleToggleCompleted(mod: ModuleWithObjectives) {
+    toggleCompleted.mutate({ id: mod.id, completed: !mod.completed });
+  }
 
   return (
     <div className="space-y-4">
@@ -54,22 +61,49 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
         <Accordion type="single" collapsible className="space-y-2">
           {modules.map((mod) => {
             const objectiveCount = mod.learning_objectives.length;
+            const completedObjectives = mod.learning_objectives.filter((o) => o.completed).length;
             return (
               <AccordionItem
                 key={mod.id}
                 value={mod.id}
-                className="rounded-xl border border-border/30 bg-card shadow-warm overflow-hidden"
+                className={`rounded-xl border overflow-hidden transition-colors ${
+                  mod.completed
+                    ? 'border-[var(--status-resting)]/30 bg-[var(--status-resting)]/5 shadow-sm'
+                    : 'border-border/30 bg-card shadow-warm'
+                }`}
               >
                 <div className="flex items-center">
-                  <AccordionTrigger className="flex-1 px-5 py-4 hover:no-underline">
+                  <div className="pl-3 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleCompleted(mod);
+                      }}
+                      title={mod.completed ? 'Mark incomplete' : 'Mark complete'}
+                      className="transition-colors"
+                    >
+                      {mod.completed ? (
+                        <CheckCircle2 className="h-5 w-5 text-[var(--status-resting)]" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground/30 hover:text-[var(--amber)]" />
+                      )}
+                    </button>
+                  </div>
+                  <AccordionTrigger className="flex-1 px-3 py-4 hover:no-underline">
                     <div className="flex items-center gap-3 text-left">
                       <Layers className="h-4 w-4 text-[var(--node-project)] shrink-0" />
                       <div>
-                        <span className="text-sm font-semibold">{mod.title}</span>
+                        <span className={`text-sm font-semibold ${mod.completed ? 'line-through opacity-60' : ''}`}>
+                          {mod.title}
+                        </span>
                         <div className="flex items-center gap-2 mt-1">
-                          <StatusBadge status={mod.status as 'not_started' | 'exploring' | 'deepening' | 'resting'} />
+                          {mod.completed ? (
+                            <StatusBadge status="deepening" />
+                          ) : (
+                            <StatusBadge status={mod.status as 'not_started' | 'exploring' | 'deepening' | 'resting'} />
+                          )}
                           <span className="text-[11px] text-muted-foreground">
-                            {objectiveCount} {objectiveCount === 1 ? 'objective' : 'objectives'}
+                            {completedObjectives}/{objectiveCount} objectives
                           </span>
                         </div>
                       </div>
@@ -98,6 +132,12 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                     objectives={mod.learning_objectives}
                     pathId={pathId}
                     moduleId={mod.id}
+                    modules={moduleRefs}
+                    onAllCompleted={() => {
+                      if (!mod.completed) {
+                        toggleCompleted.mutate({ id: mod.id, completed: true });
+                      }
+                    }}
                   />
                 </AccordionContent>
               </AccordionItem>
