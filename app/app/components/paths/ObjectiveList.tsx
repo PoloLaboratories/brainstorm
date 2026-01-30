@@ -129,6 +129,39 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                     {obj.title}
                   </span>
                   <DepthBadge depth={obj.depth_level as 'survey' | 'intermediate' | 'deep'} />
+                  {modules && modules.length > 0 && (
+                    movingObjectiveId === obj.id ? (
+                      <div className="flex items-center gap-1">
+                        <Select onValueChange={(val) => handleMoveToModule(obj.id, val)}>
+                          <SelectTrigger className="h-5 text-[10px] w-32">
+                            <SelectValue placeholder="Move to..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {moduleId !== null && (
+                              <SelectItem value="__path__">Path level</SelectItem>
+                            )}
+                            {modules.filter((m) => m.id !== moduleId).map((m) => (
+                              <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <button
+                          onClick={() => setMovingObjectiveId(null)}
+                          className="text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setMovingObjectiveId(obj.id)}
+                        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ArrowRightLeft className="h-2.5 w-2.5" />
+                        Move
+                      </button>
+                    )
+                  )}
                 </div>
                 {obj.description && (
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -160,39 +193,6 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                       Add resource
                     </button>
                   </AddResourceDialog>
-                  {modules && modules.length > 0 && (
-                    movingObjectiveId === obj.id ? (
-                      <div className="flex items-center gap-1">
-                        <Select onValueChange={(val) => handleMoveToModule(obj.id, val)}>
-                          <SelectTrigger className="h-6 text-[10px] w-36">
-                            <SelectValue placeholder="Move to..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {moduleId !== null && (
-                              <SelectItem value="__path__">Path level</SelectItem>
-                            )}
-                            {modules.filter((m) => m.id !== moduleId).map((m) => (
-                              <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <button
-                          onClick={() => setMovingObjectiveId(null)}
-                          className="text-[10px] text-muted-foreground hover:text-foreground"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setMovingObjectiveId(obj.id)}
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ArrowRightLeft className="h-3 w-3" />
-                        Move
-                      </button>
-                    )
-                  )}
                 </div>
               </div>
             </div>
