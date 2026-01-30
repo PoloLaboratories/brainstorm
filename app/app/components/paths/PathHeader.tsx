@@ -122,7 +122,7 @@ export function PathHeader({ path }: PathHeaderProps) {
             className="text-2xl lg:text-3xl font-display font-bold tracking-tight"
           />
           {path.description ? (
-            <div className="mt-1.5 max-w-2xl">
+            <div className="mt-1.5">
               <InlineEdit
                 value={path.description}
                 onSave={(val) => updatePath.mutate({ id: path.id, description: val || null })}
@@ -131,7 +131,7 @@ export function PathHeader({ path }: PathHeaderProps) {
               />
             </div>
           ) : (
-            <div className="mt-1.5 max-w-2xl">
+            <div className="mt-1.5">
               <InlineEdit
                 value=""
                 onSave={(val) => updatePath.mutate({ id: path.id, description: val })}
