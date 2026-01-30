@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as motion from 'motion/react-client';
-import { ArrowLeft, Pencil, Trash2, Brain, BookOpen, Layers, Target } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Brain, BookOpen, Layers, Target, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useConcept, useUpdateConcept, useDeleteConcept } from '@/lib/hooks/use-concepts';
+import { useConcept, useUpdateConcept, useDeleteConcept, useConceptLinkedEntities, type LinkedEntity } from '@/lib/hooks/use-concepts';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -102,10 +102,56 @@ function InlineEdit({ value, onSave, className, multiline, placeholder }: { valu
   );
 }
 
+function LinkedEntitySection({
+  icon: Icon,
+  title,
+  entities,
+  emptyText,
+  delay,
+}: {
+  icon: React.ElementType;
+  title: string;
+  entities: LinkedEntity[];
+  emptyText: string;
+  delay: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, delay, ease }}
+      className="space-y-3"
+    >
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-[var(--node-concept)]" />
+        <h2 className="text-lg font-display font-semibold">{title}</h2>
+        <span className="text-xs text-muted-foreground">({entities.length})</span>
+      </div>
+      {entities.length > 0 ? (
+        <div className="space-y-1">
+          {entities.map((e) => (
+            <Link
+              key={e.id}
+              href={e.href}
+              className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-accent/50 transition-colors"
+            >
+              <span className="text-sm">{e.title}</span>
+              <ExternalLink className="h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground/60 transition-colors" />
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground/60 pl-6">{emptyText}</p>
+      )}
+    </motion.div>
+  );
+}
+
 export default function ConceptDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { data: concept, isLoading, error } = useConcept(id);
+  const { data: linked } = useConceptLinkedEntities(id);
   const updateConcept = useUpdateConcept();
   const deleteConcept = useDeleteConcept();
 
@@ -223,52 +269,31 @@ export default function ConceptDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Linked Paths */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.15, ease }}
-        className="space-y-3"
-      >
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-[var(--node-concept)]" />
-          <h2 className="text-lg font-display font-semibold">Linked Paths</h2>
-        </div>
-        <div className="rounded-xl border-2 border-dashed border-border/60 p-6 text-center">
-          <p className="text-sm text-muted-foreground">Concept tags will show linked paths here.</p>
-        </div>
-      </motion.div>
+      <LinkedEntitySection
+        icon={BookOpen}
+        title="Linked Paths"
+        entities={linked?.paths ?? []}
+        emptyText="No paths linked to this concept yet."
+        delay={0.15}
+      />
 
       {/* Linked Modules */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.25, ease }}
-        className="space-y-3"
-      >
-        <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-[var(--node-concept)]" />
-          <h2 className="text-lg font-display font-semibold">Linked Modules</h2>
-        </div>
-        <div className="rounded-xl border-2 border-dashed border-border/60 p-6 text-center">
-          <p className="text-sm text-muted-foreground">Concept tags will show linked modules here.</p>
-        </div>
-      </motion.div>
+      <LinkedEntitySection
+        icon={Layers}
+        title="Linked Modules"
+        entities={linked?.modules ?? []}
+        emptyText="No modules linked to this concept yet."
+        delay={0.25}
+      />
 
       {/* Linked Objectives */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.35, ease }}
-        className="space-y-3"
-      >
-        <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-[var(--node-concept)]" />
-          <h2 className="text-lg font-display font-semibold">Linked Objectives</h2>
-        </div>
-        <div className="rounded-xl border-2 border-dashed border-border/60 p-6 text-center">
-          <p className="text-sm text-muted-foreground">Concept tags will show linked objectives here.</p>
-        </div>
-      </motion.div>
+      <LinkedEntitySection
+        icon={Target}
+        title="Linked Objectives"
+        entities={linked?.objectives ?? []}
+        emptyText="No objectives linked to this concept yet."
+        delay={0.35}
+      />
     </motion.div>
   );
 }

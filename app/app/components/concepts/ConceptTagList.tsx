@@ -3,6 +3,9 @@
 import { useEntityConcepts, useUnlinkConcept, type EntityType } from '@/lib/hooks/use-concepts';
 import { ConceptTag } from './ConceptTag';
 import { AddConceptPopover } from './AddConceptPopover';
+import { Database } from '@/types/database';
+
+type ConceptRow = Database['public']['Tables']['concepts']['Row'];
 
 interface ConceptTagListProps {
   entityType: EntityType;
@@ -14,14 +17,14 @@ export function ConceptTagList({ entityType, entityId }: ConceptTagListProps) {
   const unlinkConcept = useUnlinkConcept();
 
   const concepts = (linked ?? [])
-    .map((row) => row.concepts)
-    .filter(Boolean);
+    .map((row) => row.concepts as unknown as ConceptRow | null)
+    .filter((c): c is ConceptRow => c !== null);
 
-  const excludeIds = concepts.map((c: any) => c.id);
+  const excludeIds = concepts.map((c) => c.id);
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      {concepts.map((c: any) => (
+      {concepts.map((c) => (
         <ConceptTag
           key={c.id}
           conceptId={c.id}
