@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/app/components/AppSidebar';
-import { Separator } from '@/components/ui/separator';
+import { PageTransition } from '@/app/components/PageTransition';
 
 export default async function ProtectedLayout({
   children,
@@ -15,13 +15,9 @@ export default async function ProtectedLayout({
     <SidebarProvider>
       <AppSidebar userEmail={user?.email} />
       <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b border-border px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="h-4" />
-        </header>
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <div className="flex-1 px-8 py-8 mx-auto w-full max-w-6xl">
+          <PageTransition>{children}</PageTransition>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
