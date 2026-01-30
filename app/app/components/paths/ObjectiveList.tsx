@@ -43,6 +43,48 @@ interface ObjectiveListProps {
   onAllCompleted?: () => void;
 }
 
+function InlineEdit({ value, onSave, className, multiline }: { value: string; onSave: (val: string) => void; className?: string; multiline?: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    const sharedProps = {
+      className: `bg-transparent border-b border-[var(--amber)] outline-none w-full ${className ?? ''}`,
+      value: draft,
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey && draft.trim()) { onSave(draft.trim()); setEditing(false); }
+        if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+      },
+      onBlur: () => {
+        if (draft.trim() && draft.trim() !== value) onSave(draft.trim());
+        setEditing(false);
+      },
+      autoFocus: true,
+    };
+
+    if (multiline) {
+      return <textarea {...sharedProps} rows={3} className={`${sharedProps.className} resize-none rounded-md border border-[var(--amber)]/40 px-2 py-1`} />;
+    }
+    return <input {...sharedProps} />;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 group/edit">
+      <span
+        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${className ?? ''}`}
+        onClick={() => { setDraft(value); setEditing(true); }}
+      >
+        {value}
+      </span>
+      <Pencil
+        className="h-2.5 w-2.5 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors cursor-pointer"
+        onClick={() => { setDraft(value); setEditing(true); }}
+      />
+    </span>
+  );
+}
+
 export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllCompleted }: ObjectiveListProps) {
   const deleteObjective = useDeleteObjective(pathId);
   const updateObjective = useUpdateObjective(pathId);
@@ -50,8 +92,6 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
   const moveObjective = useMoveObjectiveToModule(pathId);
   const [warningObjectiveId, setWarningObjectiveId] = useState<string | null>(null);
   const [movingObjectiveId, setMovingObjectiveId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
 
   function handleToggleCompleted(obj: Objective & { resources: Resource[] }) {
     const newCompleted = !obj.completed;
@@ -128,35 +168,11 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
               </button>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  {editingId === obj.id ? (
-                    <input
-                      className="text-sm font-medium bg-transparent border-b border-[var(--amber)] outline-none py-0.5 min-w-[120px]"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && editTitle.trim()) {
-                          updateObjective.mutate({ id: obj.id, title: editTitle.trim() });
-                          setEditingId(null);
-                        }
-                        if (e.key === 'Escape') setEditingId(null);
-                      }}
-                      onBlur={() => {
-                        if (editTitle.trim() && editTitle.trim() !== obj.title) {
-                          updateObjective.mutate({ id: obj.id, title: editTitle.trim() });
-                        }
-                        setEditingId(null);
-                      }}
-                      autoFocus
-                    />
-                  ) : (
-                    <span
-                      className={`text-sm font-medium cursor-pointer hover:text-[var(--amber)] transition-colors ${obj.completed ? 'line-through opacity-60' : ''}`}
-                      onClick={() => { setEditingId(obj.id); setEditTitle(obj.title); }}
-                      title="Click to edit"
-                    >
-                      {obj.title}
-                    </span>
-                  )}
+                  <InlineEdit
+                    value={obj.title}
+                    onSave={(val) => updateObjective.mutate({ id: obj.id, title: val })}
+                    className={`text-sm font-medium ${obj.completed ? 'line-through opacity-60' : ''}`}
+                  />
                   <DepthBadge depth={obj.depth_level as 'survey' | 'intermediate' | 'deep'} />
                   {modules && modules.length > 0 && (
                     movingObjectiveId === obj.id ? (
@@ -192,10 +208,23 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                     )
                   )}
                 </div>
-                {obj.description && (
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {obj.description}
-                  </p>
+                {obj.description ? (
+                  <InlineEdit
+                    value={obj.description}
+                    onSave={(val) => updateObjective.mutate({ id: obj.id, description: val || null })}
+                    className="text-xs text-muted-foreground mt-1 leading-relaxed"
+                    multiline
+                  />
+                ) : (
+                  <button
+                    onClick={() => {
+                      const desc = prompt('Add description:');
+                      if (desc?.trim()) updateObjective.mutate({ id: obj.id, description: desc.trim() });
+                    }}
+                    className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-1 transition-colors"
+                  >
+                    + Add description
+                  </button>
                 )}
                 <ResourceList
                   resources={obj.resources}
@@ -228,11 +257,11 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
             <Button
               variant="ghost"
               size="sm"
-              className="opacity-0 group-hover/obj:opacity-100 transition-opacity shrink-0 h-8 w-8 p-0"
+              className="opacity-0 group-hover/obj:opacity-50 hover:!opacity-100 transition-opacity shrink-0 h-7 w-7 p-0"
               onClick={() => deleteObjective.mutate(obj.id)}
               title="Delete objective"
             >
-              <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
             </Button>
           </div>
         </div>

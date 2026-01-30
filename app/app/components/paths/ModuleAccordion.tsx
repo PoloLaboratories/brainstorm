@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Layers, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react';
+import { Layers, Trash2, Plus, CheckCircle2, Circle, Pencil } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -28,12 +28,52 @@ interface ModuleAccordionProps {
   pathId: string;
 }
 
+function InlineEdit({ value, onSave, className, multiline }: { value: string; onSave: (val: string) => void; className?: string; multiline?: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    const sharedProps = {
+      className: `bg-transparent border-b border-[var(--amber)] outline-none w-full ${className ?? ''}`,
+      value: draft,
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey && draft.trim()) { onSave(draft.trim()); setEditing(false); }
+        if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+      },
+      onBlur: () => {
+        if (draft.trim() && draft.trim() !== value) onSave(draft.trim());
+        setEditing(false);
+      },
+      autoFocus: true,
+    };
+
+    if (multiline) {
+      return <textarea {...sharedProps} rows={3} className={`${sharedProps.className} resize-none rounded-md border border-[var(--amber)]/40 px-2 py-1`} />;
+    }
+    return <input {...sharedProps} />;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 group/edit">
+      <span
+        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${className ?? ''}`}
+        onClick={() => { setDraft(value); setEditing(true); }}
+      >
+        {value}
+      </span>
+      <Pencil
+        className="h-2.5 w-2.5 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors cursor-pointer"
+        onClick={() => { setDraft(value); setEditing(true); }}
+      />
+    </span>
+  );
+}
+
 export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
   const deleteModule = useDeleteModule(pathId);
   const updateModule = useUpdateModule(pathId);
   const toggleCompleted = useToggleModuleCompleted(pathId);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
 
   const moduleRefs = modules.map((m) => ({ id: m.id, title: m.title }));
 
@@ -76,7 +116,7 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                     : 'border-border/30 bg-card shadow-warm'
                 }`}
               >
-                <div className="flex items-center">
+                <div className="flex items-center group/mod">
                   <div className="pl-3 shrink-0">
                     <button
                       onClick={(e) => {
@@ -94,40 +134,14 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                     </button>
                   </div>
                   <AccordionTrigger className="flex-1 px-3 py-4 hover:no-underline">
-                    <div className="flex items-center gap-3 text-left">
+                    <div className="flex items-center gap-3 text-left" onClick={(e) => e.stopPropagation()}>
                       <Layers className="h-4 w-4 text-[var(--node-project)] shrink-0" />
                       <div>
-                        {editingId === mod.id ? (
-                          <input
-                            className="text-sm font-semibold bg-transparent border-b border-[var(--amber)] outline-none py-0.5 min-w-[160px]"
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => {
-                              e.stopPropagation();
-                              if (e.key === 'Enter' && editTitle.trim()) {
-                                updateModule.mutate({ id: mod.id, title: editTitle.trim() });
-                                setEditingId(null);
-                              }
-                              if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            onBlur={() => {
-                              if (editTitle.trim() && editTitle.trim() !== mod.title) {
-                                updateModule.mutate({ id: mod.id, title: editTitle.trim() });
-                              }
-                              setEditingId(null);
-                            }}
-                            autoFocus
-                          />
-                        ) : (
-                          <span
-                            className={`text-sm font-semibold cursor-pointer hover:text-[var(--amber)] transition-colors ${mod.completed ? 'line-through opacity-60' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); setEditingId(mod.id); setEditTitle(mod.title); }}
-                            title="Click to edit"
-                          >
-                            {mod.title}
-                          </span>
-                        )}
+                        <InlineEdit
+                          value={mod.title}
+                          onSave={(val) => updateModule.mutate({ id: mod.id, title: val })}
+                          className={`text-sm font-semibold ${mod.completed ? 'line-through opacity-60' : ''}`}
+                        />
                         <div className="flex items-center gap-2 mt-1">
                           {mod.completed ? (
                             <StatusBadge status="deepening" />
@@ -144,7 +158,7 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mr-3 shrink-0 h-8 w-8 p-0 opacity-50 hover:opacity-100"
+                    className="mr-3 shrink-0 h-8 w-8 p-0 opacity-0 group-hover/mod:opacity-50 hover:!opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteModule.mutate(mod.id);
@@ -155,10 +169,25 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                   </Button>
                 </div>
                 <AccordionContent className="px-5 pb-5">
-                  {mod.description && (
-                    <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                      {mod.description}
-                    </p>
+                  {mod.description ? (
+                    <div className="mb-4">
+                      <InlineEdit
+                        value={mod.description}
+                        onSave={(val) => updateModule.mutate({ id: mod.id, description: val || null })}
+                        className="text-sm text-muted-foreground leading-relaxed"
+                        multiline
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const desc = prompt('Add description:');
+                        if (desc?.trim()) updateModule.mutate({ id: mod.id, description: desc.trim() });
+                      }}
+                      className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mb-4 transition-colors"
+                    >
+                      + Add description
+                    </button>
                   )}
                   <ObjectiveList
                     objectives={mod.learning_objectives}

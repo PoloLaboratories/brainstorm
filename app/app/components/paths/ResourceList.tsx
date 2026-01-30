@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ExternalLink, Trash2, Video, FileText, BookOpen, GraduationCap, ScrollText, Check } from 'lucide-react';
+import { ExternalLink, Trash2, Video, FileText, BookOpen, GraduationCap, ScrollText, Check, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeleteResource, useUpdateResource, useToggleResourceReviewed } from '@/lib/hooks/use-resources';
 import { Database } from '@/types/database';
@@ -16,6 +16,48 @@ const TYPE_ICONS: Record<string, typeof Video> = {
   paper: ScrollText,
 };
 
+function InlineEdit({ value, onSave, className, multiline }: { value: string; onSave: (val: string) => void; className?: string; multiline?: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    const sharedProps = {
+      className: `bg-transparent border-b border-[var(--amber)] outline-none w-full ${className ?? ''}`,
+      value: draft,
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey && draft.trim()) { onSave(draft.trim()); setEditing(false); }
+        if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+      },
+      onBlur: () => {
+        if (draft.trim() && draft.trim() !== value) onSave(draft.trim());
+        setEditing(false);
+      },
+      autoFocus: true,
+    };
+
+    if (multiline) {
+      return <textarea {...sharedProps} rows={2} className={`${sharedProps.className} resize-none rounded-md border border-[var(--amber)]/40 px-2 py-1`} />;
+    }
+    return <input {...sharedProps} />;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 group/edit">
+      <span
+        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${className ?? ''}`}
+        onClick={() => { setDraft(value); setEditing(true); }}
+      >
+        {value}
+      </span>
+      <Pencil
+        className="h-2.5 w-2.5 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors cursor-pointer shrink-0"
+        onClick={() => { setDraft(value); setEditing(true); }}
+      />
+    </span>
+  );
+}
+
 interface ResourceListProps {
   resources: Resource[];
   pathId: string;
@@ -26,8 +68,6 @@ export function ResourceList({ resources, pathId, onAllReviewed }: ResourceListP
   const deleteResource = useDeleteResource(pathId);
   const updateResource = useUpdateResource(pathId);
   const toggleReviewed = useToggleResourceReviewed(pathId);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
 
   if (resources.length === 0) return null;
 
@@ -85,51 +125,29 @@ export function ResourceList({ resources, pathId, onAllReviewed }: ResourceListP
               )}
             </button>
             <div className="flex-1 min-w-0">
-              {editingId === resource.id ? (
-                <input
-                  className="text-sm font-medium bg-transparent border-b border-[var(--amber)] outline-none py-0.5 w-full"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && editTitle.trim()) {
-                      updateResource.mutate({ id: resource.id, title: editTitle.trim() });
-                      setEditingId(null);
-                    }
-                    if (e.key === 'Escape') setEditingId(null);
-                  }}
-                  onBlur={() => {
-                    if (editTitle.trim() && editTitle.trim() !== resource.title) {
-                      updateResource.mutate({ id: resource.id, title: editTitle.trim() });
-                    }
-                    setEditingId(null);
-                  }}
-                  autoFocus
+              <span className="inline-flex items-center gap-1">
+                <InlineEdit
+                  value={resource.title}
+                  onSave={(val) => updateResource.mutate({ id: resource.id, title: val })}
+                  className={`text-sm font-medium ${resource.reviewed ? 'line-through opacity-60' : ''}`}
                 />
-              ) : (
-                <span className="inline-flex items-center gap-1">
-                  <span
-                    className={`text-sm font-medium cursor-pointer hover:text-[var(--amber)] transition-colors ${
-                      resource.reviewed ? 'line-through opacity-60' : ''
-                    }`}
-                    onClick={() => { setEditingId(resource.id); setEditTitle(resource.title); }}
-                    title="Click to edit title"
-                  >
-                    {resource.title}
-                  </span>
-                  <a
-                    href={resource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-[var(--amber)] transition-colors"
-                    title="Open link"
-                  >
-                    <ExternalLink className="h-3 w-3 opacity-50" />
-                  </a>
-                </span>
+                <a
+                  href={resource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-[var(--amber)] transition-colors shrink-0"
+                  title="Open link"
+                >
+                  <ExternalLink className="h-3 w-3 opacity-50" />
+                </a>
+              </span>
+              {resource.why_relevant && (
+                <InlineEdit
+                  value={resource.why_relevant}
+                  onSave={(val) => updateResource.mutate({ id: resource.id, why_relevant: val })}
+                  className="text-xs text-muted-foreground mt-0.5 leading-relaxed"
+                />
               )}
-              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                {resource.why_relevant}
-              </p>
             </div>
             <Button
               variant="ghost"
