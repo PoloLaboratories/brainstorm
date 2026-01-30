@@ -173,7 +173,10 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                     onSave={(val) => updateObjective.mutate({ id: obj.id, title: val })}
                     className={`text-sm font-medium ${obj.completed ? 'line-through opacity-60' : ''}`}
                   />
-                  <DepthBadge depth={obj.depth_level as 'survey' | 'intermediate' | 'deep'} />
+                  <DepthBadge
+                    depth={obj.depth_level as 'survey' | 'intermediate' | 'deep'}
+                    onChange={(next) => updateObjective.mutate({ id: obj.id, depth_level: next })}
+                  />
                   {modules && modules.length > 0 && (
                     movingObjectiveId === obj.id ? (
                       <div className="flex items-center gap-1">
