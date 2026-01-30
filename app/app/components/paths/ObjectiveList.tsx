@@ -43,7 +43,7 @@ interface ObjectiveListProps {
   onAllCompleted?: () => void;
 }
 
-function InlineEdit({ value, onSave, className, multiline }: { value: string; onSave: (val: string) => void; className?: string; multiline?: boolean }) {
+function InlineEdit({ value, onSave, className, multiline, placeholder }: { value: string; onSave: (val: string) => void; className?: string; multiline?: boolean; placeholder?: string }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -51,6 +51,7 @@ function InlineEdit({ value, onSave, className, multiline }: { value: string; on
     const sharedProps = {
       className: `bg-transparent border-b border-[var(--amber)] outline-none w-full ${className ?? ''}`,
       value: draft,
+      placeholder: placeholder ?? '',
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
       onKeyDown: (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey && draft.trim()) { onSave(draft.trim()); setEditing(false); }
@@ -67,6 +68,17 @@ function InlineEdit({ value, onSave, className, multiline }: { value: string; on
       return <textarea {...sharedProps} rows={3} className={`${sharedProps.className} resize-none rounded-md border border-[var(--amber)]/40 px-2 py-1`} />;
     }
     return <input {...sharedProps} />;
+  }
+
+  if (!value && placeholder) {
+    return (
+      <button
+        onClick={() => { setDraft(''); setEditing(true); }}
+        className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-1 transition-colors"
+      >
+        {placeholder}
+      </button>
+    );
   }
 
   return (
@@ -219,15 +231,13 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                     multiline
                   />
                 ) : (
-                  <button
-                    onClick={() => {
-                      const desc = prompt('Add description:');
-                      if (desc?.trim()) updateObjective.mutate({ id: obj.id, description: desc.trim() });
-                    }}
-                    className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-1 transition-colors"
-                  >
-                    + Add description
-                  </button>
+                  <InlineEdit
+                    value=""
+                    onSave={(val) => updateObjective.mutate({ id: obj.id, description: val })}
+                    className="text-xs text-muted-foreground mt-1 leading-relaxed"
+                    multiline
+                    placeholder="+ Add description"
+                  />
                 )}
                 <ResourceList
                   resources={obj.resources}
