@@ -33,17 +33,22 @@ function InlineEdit({ value, onSave, className, multiline, placeholder }: { valu
   const [draft, setDraft] = useState(value);
 
   if (editing) {
+    const isNew = !value && !!placeholder;
     const sharedProps = {
       className: `bg-transparent border-b border-[var(--amber)] outline-none w-full ${className ?? ''}`,
       value: draft,
-      placeholder: placeholder ?? '',
+      placeholder: placeholder ? 'Description...' : '',
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
       onKeyDown: (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey && draft.trim()) { onSave(draft.trim()); setEditing(false); }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          if (isNew && !draft.trim()) return;
+          onSave(draft.trim()); setEditing(false);
+        }
         if (e.key === 'Escape') { setDraft(value); setEditing(false); }
       },
       onBlur: () => {
-        if (draft.trim() && draft.trim() !== value) onSave(draft.trim());
+        if (isNew && !draft.trim()) { setEditing(false); return; }
+        if (draft.trim() !== value) onSave(draft.trim());
         setEditing(false);
       },
       autoFocus: true,
