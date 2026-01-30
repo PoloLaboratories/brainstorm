@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Layers, Trash2, Plus, CheckCircle2, Circle, Pencil } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Layers, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -98,9 +97,37 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                     <div className="flex items-center gap-3 text-left">
                       <Layers className="h-4 w-4 text-[var(--node-project)] shrink-0" />
                       <div>
-                        <span className={`text-sm font-semibold ${mod.completed ? 'line-through opacity-60' : ''}`}>
-                          {mod.title}
-                        </span>
+                        {editingId === mod.id ? (
+                          <input
+                            className="text-sm font-semibold bg-transparent border-b border-[var(--amber)] outline-none py-0.5 min-w-[160px]"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter' && editTitle.trim()) {
+                                updateModule.mutate({ id: mod.id, title: editTitle.trim() });
+                                setEditingId(null);
+                              }
+                              if (e.key === 'Escape') setEditingId(null);
+                            }}
+                            onBlur={() => {
+                              if (editTitle.trim() && editTitle.trim() !== mod.title) {
+                                updateModule.mutate({ id: mod.id, title: editTitle.trim() });
+                              }
+                              setEditingId(null);
+                            }}
+                            autoFocus
+                          />
+                        ) : (
+                          <span
+                            className={`text-sm font-semibold cursor-pointer hover:text-[var(--amber)] transition-colors ${mod.completed ? 'line-through opacity-60' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); setEditingId(mod.id); setEditTitle(mod.title); }}
+                            title="Click to edit"
+                          >
+                            {mod.title}
+                          </span>
+                        )}
                         <div className="flex items-center gap-2 mt-1">
                           {mod.completed ? (
                             <StatusBadge status="deepening" />
@@ -128,46 +155,6 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                   </Button>
                 </div>
                 <AccordionContent className="px-5 pb-5">
-                  {editingId === mod.id ? (
-                    <div className="flex items-center gap-2 mb-4">
-                      <Input
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && editTitle.trim()) {
-                            updateModule.mutate({ id: mod.id, title: editTitle.trim() });
-                            setEditingId(null);
-                          }
-                          if (e.key === 'Escape') setEditingId(null);
-                        }}
-                        className="text-sm font-semibold h-8"
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        className="h-8 shrink-0"
-                        onClick={() => {
-                          if (editTitle.trim()) {
-                            updateModule.mutate({ id: mod.id, title: editTitle.trim() });
-                          }
-                          setEditingId(null);
-                        }}
-                      >
-                        Save
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-8 shrink-0" onClick={() => setEditingId(null)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setEditingId(mod.id); setEditTitle(mod.title); }}
-                      className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mb-3"
-                    >
-                      <Pencil className="h-2.5 w-2.5" />
-                      Edit name
-                    </button>
-                  )}
                   {mod.description && (
                     <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                       {mod.description}
