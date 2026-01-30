@@ -6,6 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useLearningPath } from '@/lib/hooks/use-learning-paths';
 import { PathHeader } from '@/app/components/paths/PathHeader';
 import { ModuleAccordion } from '@/app/components/paths/ModuleAccordion';
+import { ObjectiveList } from '@/app/components/paths/ObjectiveList';
+import { Target } from 'lucide-react';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -39,6 +41,10 @@ export default function PathDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
+  const pathObjectives = (path as any).pathObjectives ?? [];
+  const modules = path.modules ?? [];
+  const moduleRefs = modules.map((m: any) => ({ id: m.id, title: m.title }));
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -48,12 +54,32 @@ export default function PathDetailPage({ params }: { params: Promise<{ id: strin
     >
       <PathHeader path={path} />
 
+      {/* Path-level objectives */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.2, ease }}
+        transition={{ duration: 0.4, delay: 0.15, ease }}
       >
-        <ModuleAccordion modules={path.modules ?? []} pathId={path.id} />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-[var(--amber)]" />
+            <h2 className="text-lg font-display font-semibold">Path Objectives</h2>
+          </div>
+          <ObjectiveList
+            objectives={pathObjectives}
+            pathId={path.id}
+            moduleId={null}
+            modules={moduleRefs}
+          />
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.25, ease }}
+      >
+        <ModuleAccordion modules={modules} pathId={path.id} />
       </motion.div>
     </motion.div>
   );
