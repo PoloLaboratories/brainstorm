@@ -221,29 +221,35 @@ export type Database = {
       }
       learning_objectives: {
         Row: {
+          completed: boolean
           created_at: string | null
           depth_level: string | null
           description: string | null
           id: string
-          module_id: string
+          module_id: string | null
+          path_id: string
           title: string
           updated_at: string | null
         }
         Insert: {
+          completed?: boolean
           created_at?: string | null
           depth_level?: string | null
           description?: string | null
           id?: string
-          module_id: string
+          module_id?: string | null
+          path_id: string
           title: string
           updated_at?: string | null
         }
         Update: {
+          completed?: boolean
           created_at?: string | null
           depth_level?: string | null
           description?: string | null
           id?: string
-          module_id?: string
+          module_id?: string | null
+          path_id?: string
           title?: string
           updated_at?: string | null
         }
@@ -253,6 +259,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_objectives_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
             referencedColumns: ["id"]
           },
         ]
@@ -325,6 +338,7 @@ export type Database = {
       }
       modules: {
         Row: {
+          completed: boolean
           created_at: string | null
           description: string | null
           id: string
@@ -334,6 +348,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          completed?: boolean
           created_at?: string | null
           description?: string | null
           id?: string
@@ -343,6 +358,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          completed?: boolean
           created_at?: string | null
           description?: string | null
           id?: string
@@ -366,6 +382,7 @@ export type Database = {
           created_at: string | null
           id: string
           objective_id: string
+          reviewed: boolean
           specific_context: Json | null
           title: string
           type: string
@@ -376,6 +393,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           objective_id: string
+          reviewed?: boolean
           specific_context?: Json | null
           title: string
           type: string
@@ -386,6 +404,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           objective_id?: string
+          reviewed?: boolean
           specific_context?: Json | null
           title?: string
           type?: string
