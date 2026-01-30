@@ -322,6 +322,7 @@ animate-pulse-glow    // Active/selected nodes (2s infinite)
 animate-node-appear   // New graph nodes (0.5s with scale bounce)
 animate-connection-draw // Graph edges drawing in (0.8s)
 animate-float         // Subtle floating effect (3s infinite)
+animate-glow-breathe  // Ambient breathing glow (3s infinite, opacity 0.4↔1)
 ```
 
 #### When to Use
@@ -332,6 +333,7 @@ animate-float         // Subtle floating effect (3s infinite)
 | `connection-draw` | Edge appearing between nodes |
 | `fade-in` | Content loading, page transitions |
 | `float` | Curiosity sparks, suggestions |
+| `glow-breathe` | Sidebar logo ambient glow |
 
 ### Utility Classes
 
@@ -342,7 +344,7 @@ animate-float         // Subtle floating effect (3s infinite)
 .gradient-glow      /* Radial glow for emphasis */
 
 /* Text effects */
-.text-gradient-warm /* Gradient text for headings */
+.text-gradient-warm /* Gradient text for headings (OKLch) */
 
 /* Glassmorphism */
 .glass              /* Frosted glass effect for overlays */
@@ -351,6 +353,20 @@ animate-float         // Subtle floating effect (3s infinite)
 .node-glow-objective /* Amber glow for objective nodes */
 .node-glow-project   /* Blue glow for project nodes */
 .node-glow-idea      /* Purple glow for idea nodes */
+
+/* Shadows — warm amber-tinted elevation */
+.shadow-warm        /* Subtle warm shadow for cards */
+.shadow-warm-lg     /* Larger warm shadow for hover states */
+
+/* Dashboard */
+.stat-card-accent   /* Stat card with hover-reveal accent border (set --stat-accent) */
+
+/* Landing page buttons */
+.btn-walkthrough-hero   /* "How it works" button — lighter base, amber hover */
+.btn-walkthrough-footer /* "Watch the demo" button — darker base, amber hover */
+
+/* Graph preview */
+.graph-preview-border   /* Shimmer border animation for graph cards */
 ```
 
 ### Dark Mode
@@ -366,9 +382,10 @@ Dark mode uses **warm dark tones**, not pure black:
 
 #### Cards
 - Use `bg-card` for surface, never `bg-white`
-- Subtle border with `border-border`
-- Shadow: `shadow-sm` (light) or custom warm shadows
-- Rounded corners: `rounded-lg` (uses --radius)
+- Subtle border with `border-border` or `border-border/30`
+- Shadow: `shadow-warm` (preferred), or `shadow-sm` for minimal elevation
+- Hover: `hover:shadow-warm-lg hover:-translate-y-0.5 transition-all duration-200`
+- Rounded corners: `rounded-lg` or `rounded-xl`
 
 #### Buttons
 - Primary: Amber background, use for main actions
