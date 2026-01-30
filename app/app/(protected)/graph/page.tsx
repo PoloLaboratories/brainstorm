@@ -11,7 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export default function GraphPage() {
-  const { nodes, edges, isLoading, error } = useGraphData();
+  const { data: graphData, isLoading, error } = useGraphData();
+  const nodes = graphData?.nodes ?? [];
+  const edges = graphData?.edges ?? [];
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
@@ -45,8 +47,8 @@ export default function GraphPage() {
   }, [nodes]);
 
   const handleNodeClick = (node: GraphNode) => {
-    if (node.type === 'path') {
-      router.push(`/paths/${node.id}`);
+    if (node.type === 'concept') {
+      router.push(`/concepts/${node.id}`);
     }
   };
 

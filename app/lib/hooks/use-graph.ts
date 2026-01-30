@@ -1,76 +1,64 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useLearningPaths } from './use-learning-paths';
+import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@/lib/supabase/client';
 import type { GraphNode, GraphEdge } from '@/app/components/graph/ForceGraph';
 
-/** Shape returned by useLearningPaths select with nested modules + objectives */
-interface PathWithNested {
-  id: string;
-  title: string;
-  modules?: {
-    id: string;
-    title: string;
-    completed: boolean;
-    learning_objectives?: {
-      id: string;
-      title: string;
-      completed: boolean;
-    }[];
-  }[];
-}
-
-/**
- * Derives a knowledge graph from the user's learning paths.
- *
- * Node hierarchy:  Path (largest) → Module (medium) → Objective (smallest)
- * Edge semantics:  path→module (contains), module→objective (contains)
- */
 export function useGraphData() {
-  const { data: paths, isLoading, error } = useLearningPaths();
+  const supabase = createClient();
 
-  const graph = useMemo(() => {
-    const nodes: GraphNode[] = [];
-    const edges: GraphEdge[] = [];
+  return useQuery({
+    queryKey: ['graph-data'],
+    queryFn: async () => {
+      const nodes: GraphNode[] = [];
+      const edges: GraphEdge[] = [];
+      const nodeIds = new Set<string>();
 
-    if (!paths) return { nodes, edges };
+      // Fetch concepts and objectives in parallel
+      const [conceptsRes, objectivesRes, conceptObjectivesRes, graphEdgesRes] = await Promise.all([
+        supabase.from('concepts').select('id, name'),
+        supabase.from('learning_objectives').select('id, title'),
+        supabase.from('concept_objectives').select('concept_id, objective_id'),
+        supabase.from('graph_edges').select('source_id, source_type, target_id, target_type'),
+      ]);
 
-    for (const path of paths as PathWithNested[]) {
-      nodes.push({
-        id: path.id,
-        label: path.title,
-        type: 'path',
-        r: 24,
-      });
+      if (conceptsRes.error) throw conceptsRes.error;
+      if (objectivesRes.error) throw objectivesRes.error;
+      if (conceptObjectivesRes.error) throw conceptObjectivesRes.error;
+      if (graphEdgesRes.error) throw graphEdgesRes.error;
 
-      const modules = path.modules ?? [];
+      // Concept nodes
+      for (const c of conceptsRes.data) {
+        nodes.push({ id: c.id, label: c.name, type: 'concept', r: 18 });
+        nodeIds.add(c.id);
+      }
 
-      for (const mod of modules) {
-        nodes.push({
-          id: mod.id,
-          label: mod.title ?? 'Untitled module',
-          type: 'module',
-          r: 18,
-        });
+      // Objective nodes
+      for (const o of objectivesRes.data) {
+        nodes.push({ id: o.id, label: o.title, type: 'objective', r: 12 });
+        nodeIds.add(o.id);
+      }
 
-        edges.push({ source: path.id, target: mod.id });
-
-        const objectives = mod.learning_objectives ?? [];
-        for (const obj of objectives) {
-          nodes.push({
-            id: obj.id,
-            label: obj.title ?? 'Untitled objective',
-            type: 'objective',
-            r: 12,
-          });
-
-          edges.push({ source: mod.id, target: obj.id });
+      // Edges from concept_objectives junction
+      const edgeSet = new Set<string>();
+      for (const co of conceptObjectivesRes.data) {
+        const key = `${co.concept_id}->${co.objective_id}`;
+        if (!edgeSet.has(key) && nodeIds.has(co.concept_id) && nodeIds.has(co.objective_id)) {
+          edges.push({ source: co.concept_id, target: co.objective_id });
+          edgeSet.add(key);
         }
       }
-    }
 
-    return { nodes, edges };
-  }, [paths]);
+      // Explicit graph_edges (filtered to existing nodes)
+      for (const ge of graphEdgesRes.data) {
+        const key = `${ge.source_id}->${ge.target_id}`;
+        if (!edgeSet.has(key) && nodeIds.has(ge.source_id) && nodeIds.has(ge.target_id)) {
+          edges.push({ source: ge.source_id, target: ge.target_id });
+          edgeSet.add(key);
+        }
+      }
 
-  return { ...graph, isLoading, error };
+      return { nodes, edges };
+    },
+  });
 }
