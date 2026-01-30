@@ -74,6 +74,9 @@ export default function PathDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </motion.div>
 
+      {/* Visual section divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

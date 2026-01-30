@@ -16,7 +16,7 @@ export function useLearningPaths() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('learning_paths')
-        .select('*, modules(id)')
+        .select('*, modules(id, completed, learning_objectives(id, completed))')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
