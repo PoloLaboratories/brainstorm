@@ -309,7 +309,7 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                 <ResourceList
                   resources={obj.resources}
                   pathId={pathId}
-                  readOnly={obj.completed}
+                  readOnly={!!obj.completed}
                   onAllReviewed={() => {
                     if (!obj.completed) {
                       toggleCompleted.mutate({ id: obj.id, completed: true }, {

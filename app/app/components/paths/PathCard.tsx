@@ -9,8 +9,8 @@ interface PathCardProps {
   path: LearningPath & {
     modules?: {
       id: string;
-      completed: boolean;
-      learning_objectives: { id: string; completed: boolean }[];
+      completed: boolean | null;
+      learning_objectives: { id: string; completed: boolean | null }[];
     }[];
   };
 }
@@ -26,7 +26,7 @@ export function PathCard({ path }: PathCardProps) {
   // Aggregate objective progress across all modules
   const allObjectives = modules.flatMap((m) => m.learning_objectives ?? []);
   const totalObjectives = allObjectives.length;
-  const completedObjectives = allObjectives.filter((o) => o.completed).length;
+  const completedObjectives = allObjectives.filter((o) => !!o.completed).length;
   const progress = totalObjectives > 0 ? completedObjectives / totalObjectives : 0;
 
   return (
