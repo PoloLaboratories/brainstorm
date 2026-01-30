@@ -1,6 +1,6 @@
 'use client';
 
-import { Target, Plus, Trash2, CheckCircle2, Circle, AlertTriangle, ArrowRightLeft, Pencil } from 'lucide-react';
+import { Target, Plus, Trash2, CheckCircle2, Circle, AlertTriangle, ArrowRightLeft, Pencil, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ interface ObjectiveListProps {
   moduleId: string | null;
   modules?: ModuleRef[];
   onAllCompleted?: () => void;
+  onUncompleted?: () => void;
 }
 
 function InlineEdit({ value, onSave, className, multiline, placeholder }: { value: string; onSave: (val: string) => void; className?: string; multiline?: boolean; placeholder?: string }) {
@@ -102,13 +103,23 @@ function InlineEdit({ value, onSave, className, multiline, placeholder }: { valu
   );
 }
 
-export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllCompleted }: ObjectiveListProps) {
+export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllCompleted, onUncompleted }: ObjectiveListProps) {
   const deleteObjective = useDeleteObjective(pathId);
   const updateObjective = useUpdateObjective(pathId);
   const toggleCompleted = useToggleObjectiveCompleted(pathId);
   const moveObjective = useMoveObjectiveToModule(pathId);
   const [warningObjectiveId, setWarningObjectiveId] = useState<string | null>(null);
   const [movingObjectiveId, setMovingObjectiveId] = useState<string | null>(null);
+  const [expandedObjectives, setExpandedObjectives] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(id: string) {
+    setExpandedObjectives((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   function handleToggleCompleted(obj: Objective & { resources: Resource[] }) {
     const newCompleted = !obj.completed;
@@ -132,6 +143,9 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
               .filter((o) => o.id !== id)
               .every((o) => o.completed);
             if (allOthersCompleted) onAllCompleted();
+          }
+          if (!completed && onUncompleted) {
+            onUncompleted();
           }
         },
       }
@@ -161,17 +175,20 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
         </div>
       )}
 
-      {objectives.map((obj) => (
-        <div
-          key={obj.id}
-          className={`rounded-lg border p-4 group/obj transition-colors ${
-            obj.completed
-              ? 'border-[var(--status-resting)]/30 bg-[var(--status-resting)]/5'
-              : 'border-border/30 bg-card/50'
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
+      {objectives.map((obj) => {
+        const isExpanded = expandedObjectives.has(obj.id);
+        const resourceCount = obj.resources.length;
+        return (
+          <div
+            key={obj.id}
+            className={`rounded-lg border group/obj transition-colors ${
+              obj.completed
+                ? 'border-[var(--status-resting)]/30 bg-[var(--status-resting)]/5'
+                : 'border-border/30 bg-card/50'
+            }`}
+          >
+            {/* Header row — always visible */}
+            <div className="flex items-start gap-3 p-4 pb-0">
               <button
                 onClick={() => handleToggleCompleted(obj)}
                 className="mt-0.5 shrink-0 transition-colors"
@@ -185,16 +202,20 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
               </button>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <InlineEdit
-                    value={obj.title}
-                    onSave={(val) => updateObjective.mutate({ id: obj.id, title: val })}
-                    className={`text-sm font-medium ${obj.completed ? 'line-through opacity-60' : ''}`}
-                  />
+                  {obj.completed ? (
+                    <span className={`text-sm font-medium line-through opacity-60`}>{obj.title}</span>
+                  ) : (
+                    <InlineEdit
+                      value={obj.title}
+                      onSave={(val) => updateObjective.mutate({ id: obj.id, title: val })}
+                      className="text-sm font-medium"
+                    />
+                  )}
                   <DepthBadge
                     depth={obj.depth_level as 'survey' | 'intermediate' | 'deep'}
-                    onChange={(next) => updateObjective.mutate({ id: obj.id, depth_level: next })}
+                    onChange={obj.completed ? undefined : (next) => updateObjective.mutate({ id: obj.id, depth_level: next })}
                   />
-                  {modules && modules.length > 0 && (
+                  {!obj.completed && modules && modules.length > 0 && (
                     movingObjectiveId === obj.id ? (
                       <div className="flex items-center gap-1">
                         <Select onValueChange={(val) => handleMoveToModule(obj.id, val)}>
@@ -228,25 +249,63 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                     )
                   )}
                 </div>
-                {obj.description ? (
-                  <InlineEdit
-                    value={obj.description}
-                    onSave={(val) => updateObjective.mutate({ id: obj.id, description: val || null })}
-                    className="text-xs text-muted-foreground mt-1 leading-relaxed"
-                    multiline
-                  />
+              </div>
+              {!obj.completed && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="opacity-0 group-hover/obj:opacity-50 hover:!opacity-100 transition-opacity shrink-0 h-7 w-7 p-0"
+                  onClick={() => deleteObjective.mutate(obj.id)}
+                  title="Delete objective"
+                >
+                  <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                </Button>
+              )}
+            </div>
+
+            {/* Expand/collapse toggle */}
+            <button
+              onClick={() => toggleExpanded(obj.id)}
+              className="w-full flex items-center gap-2 px-4 py-2 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+              <span>
+                {resourceCount > 0
+                  ? `${obj.resources.filter((r) => r.reviewed).length}/${resourceCount} resources reviewed`
+                  : 'No resources'}
+                {obj.description ? ' · has description' : ''}
+              </span>
+            </button>
+
+            {/* Collapsible content */}
+            {isExpanded && (
+              <div className="px-4 pb-4 pl-11">
+                {obj.completed ? (
+                  obj.description && (
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed opacity-60">{obj.description}</p>
+                  )
                 ) : (
-                  <InlineEdit
-                    value=""
-                    onSave={(val) => updateObjective.mutate({ id: obj.id, description: val })}
-                    className="text-xs text-muted-foreground mt-1 leading-relaxed"
-                    multiline
-                    placeholder="+ Add description"
-                  />
+                  obj.description ? (
+                    <InlineEdit
+                      value={obj.description}
+                      onSave={(val) => updateObjective.mutate({ id: obj.id, description: val || null })}
+                      className="text-xs text-muted-foreground mt-1 leading-relaxed"
+                      multiline
+                    />
+                  ) : (
+                    <InlineEdit
+                      value=""
+                      onSave={(val) => updateObjective.mutate({ id: obj.id, description: val })}
+                      className="text-xs text-muted-foreground mt-1 leading-relaxed"
+                      multiline
+                      placeholder="+ Add description"
+                    />
+                  )
                 )}
                 <ResourceList
                   resources={obj.resources}
                   pathId={pathId}
+                  readOnly={obj.completed}
                   onAllReviewed={() => {
                     if (!obj.completed) {
                       toggleCompleted.mutate({ id: obj.id, completed: true }, {
@@ -261,29 +320,31 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
                       });
                     }
                   }}
+                  onUnreviewed={() => {
+                    if (obj.completed) {
+                      toggleCompleted.mutate({ id: obj.id, completed: false }, {
+                        onSuccess: () => {
+                          if (onUncompleted) onUncompleted();
+                        },
+                      });
+                    }
+                  }}
                 />
-                <div className="flex items-center gap-3 mt-2">
-                  <AddResourceDialog pathId={pathId} objectiveId={obj.id}>
-                    <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <Plus className="h-3 w-3" />
-                      Add resource
-                    </button>
-                  </AddResourceDialog>
-                </div>
+                {!obj.completed && (
+                  <div className="flex items-center gap-3 mt-2">
+                    <AddResourceDialog pathId={pathId} objectiveId={obj.id}>
+                      <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        <Plus className="h-3 w-3" />
+                        Add resource
+                      </button>
+                    </AddResourceDialog>
+                  </div>
+                )}
               </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover/obj:opacity-50 hover:!opacity-100 transition-opacity shrink-0 h-7 w-7 p-0"
-              onClick={() => deleteObjective.mutate(obj.id)}
-              title="Delete objective"
-            >
-              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-            </Button>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {moduleId !== null ? (
         <CreateObjectiveDialog pathId={pathId} moduleId={moduleId}>

@@ -133,60 +133,74 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                     : 'border-border/30 bg-card shadow-warm'
                 }`}
               >
-                <div className="flex items-center group/mod">
-                  <div className="pl-3 shrink-0">
-                    <button
+                <div className="relative group/mod">
+                  {!mod.completed && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 z-10 shrink-0 h-7 w-7 p-0 opacity-0 group-hover/mod:opacity-50 hover:!opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleToggleCompleted(mod);
+                        deleteModule.mutate(mod.id);
                       }}
-                      title={mod.completed ? 'Mark incomplete' : 'Mark complete'}
-                      className="transition-colors"
+                      title="Delete module"
                     >
-                      {mod.completed ? (
-                        <CheckCircle2 className="h-5 w-5 text-[var(--status-resting)]" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground/30 hover:text-[var(--amber)]" />
-                      )}
-                    </button>
-                  </div>
-                  <AccordionTrigger className="flex-1 px-3 py-4 hover:no-underline">
-                    <div className="flex items-center gap-3 text-left" onClick={(e) => e.stopPropagation()}>
-                      <Layers className="h-4 w-4 text-[var(--node-project)] shrink-0" />
-                      <div>
-                        <InlineEdit
-                          value={mod.title}
-                          onSave={(val) => updateModule.mutate({ id: mod.id, title: val })}
-                          className={`text-sm font-semibold ${mod.completed ? 'line-through opacity-60' : ''}`}
-                        />
-                        <div className="flex items-center gap-2 mt-1">
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  )}
+                  <div className="flex items-center">
+                    <div className="pl-3 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCompleted(mod);
+                        }}
+                        title={mod.completed ? 'Mark incomplete' : 'Mark complete'}
+                        className="transition-colors"
+                      >
+                        {mod.completed ? (
+                          <CheckCircle2 className="h-5 w-5 text-[var(--status-resting)]" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground/30 hover:text-[var(--amber)]" />
+                        )}
+                      </button>
+                    </div>
+                    <AccordionTrigger className="flex-1 px-3 py-4 hover:no-underline">
+                      <div className="flex items-center gap-3 text-left" onClick={(e) => e.stopPropagation()}>
+                        <Layers className="h-4 w-4 text-[var(--node-project)] shrink-0" />
+                        <div>
                           {mod.completed ? (
-                            <StatusBadge status="deepening" />
+                            <span className="text-sm font-semibold line-through opacity-60">{mod.title}</span>
                           ) : (
-                            <StatusBadge status={mod.status as 'not_started' | 'exploring' | 'deepening' | 'resting'} />
+                            <InlineEdit
+                              value={mod.title}
+                              onSave={(val) => updateModule.mutate({ id: mod.id, title: val })}
+                              className="text-sm font-semibold"
+                            />
                           )}
-                          <span className="text-[11px] text-muted-foreground">
-                            {completedObjectives}/{objectiveCount} objectives
-                          </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            {mod.completed ? (
+                              <StatusBadge status="deepening" />
+                            ) : (
+                              <StatusBadge status={mod.status as 'not_started' | 'exploring' | 'deepening' | 'resting'} />
+                            )}
+                            <span className="text-[11px] text-muted-foreground">
+                              {completedObjectives}/{objectiveCount} objectives
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </AccordionTrigger>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mr-3 shrink-0 h-8 w-8 p-0 opacity-0 group-hover/mod:opacity-50 hover:!opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteModule.mutate(mod.id);
-                    }}
-                    title="Delete module"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                  </Button>
+                    </AccordionTrigger>
+                  </div>
                 </div>
                 <AccordionContent className="px-5 pb-5">
-                  {mod.description ? (
+                  {mod.completed ? (
+                    mod.description && (
+                      <div className="mb-4">
+                        <p className="text-sm text-muted-foreground leading-relaxed opacity-60">{mod.description}</p>
+                      </div>
+                    )
+                  ) : mod.description ? (
                     <div className="mb-4">
                       <InlineEdit
                         value={mod.description}
@@ -214,6 +228,11 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                     onAllCompleted={() => {
                       if (!mod.completed) {
                         toggleCompleted.mutate({ id: mod.id, completed: true });
+                      }
+                    }}
+                    onUncompleted={() => {
+                      if (mod.completed) {
+                        toggleCompleted.mutate({ id: mod.id, completed: false });
                       }
                     }}
                   />
