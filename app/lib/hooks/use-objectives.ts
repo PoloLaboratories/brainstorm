@@ -12,10 +12,10 @@ export function useCreateObjective(pathId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (objective: Omit<ObjectiveInsert, 'id'>) => {
+    mutationFn: async (objective: { title: string; description?: string | null; depth_level?: string; module_id?: string | null }) => {
       const { data, error } = await supabase
         .from('learning_objectives')
-        .insert(objective)
+        .insert({ path_id: pathId, ...objective })
         .select()
         .single();
 
@@ -62,6 +62,50 @@ export function useDeleteObjective(pathId: string) {
         .eq('id', id);
 
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-paths', pathId] });
+    },
+  });
+}
+
+export function useToggleObjectiveCompleted(pathId: string) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { data, error } = await supabase
+        .from('learning_objectives')
+        .update({ completed })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-paths', pathId] });
+    },
+  });
+}
+
+export function useMoveObjectiveToModule(pathId: string) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, moduleId }: { id: string; moduleId: string | null }) => {
+      const { data, error } = await supabase
+        .from('learning_objectives')
+        .update({ module_id: moduleId })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['learning-paths', pathId] });
