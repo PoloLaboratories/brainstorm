@@ -1,3 +1,4 @@
+Connecting to db 5432
 export type Json =
   | string
   | number
@@ -99,6 +100,39 @@ export type Database = {
           },
         ]
       }
+      concept_modules: {
+        Row: {
+          concept_id: string
+          created_at: string | null
+          module_id: string
+        }
+        Insert: {
+          concept_id: string
+          created_at?: string | null
+          module_id: string
+        }
+        Update: {
+          concept_id?: string
+          created_at?: string | null
+          module_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_modules_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_modules_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concept_objectives: {
         Row: {
           concept_id: string
@@ -132,33 +166,63 @@ export type Database = {
           },
         ]
       }
+      concept_paths: {
+        Row: {
+          concept_id: string
+          created_at: string | null
+          path_id: string
+        }
+        Insert: {
+          concept_id: string
+          created_at?: string | null
+          path_id: string
+        }
+        Update: {
+          concept_id?: string
+          created_at?: string | null
+          path_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_paths_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_paths_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concepts: {
         Row: {
           created_at: string | null
-          created_by: string | null
           description: string | null
           id: string
           name: string
-          usage_count: number | null
-          verified: boolean | null
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
-          created_by?: string | null
           description?: string | null
           id?: string
           name: string
-          usage_count?: number | null
-          verified?: boolean | null
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
-          created_by?: string | null
           description?: string | null
           id?: string
           name?: string
-          usage_count?: number | null
-          verified?: boolean | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -221,7 +285,7 @@ export type Database = {
       }
       learning_objectives: {
         Row: {
-          completed: boolean
+          completed: boolean | null
           created_at: string | null
           depth_level: string | null
           description: string | null
@@ -232,7 +296,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          completed?: boolean
+          completed?: boolean | null
           created_at?: string | null
           depth_level?: string | null
           description?: string | null
@@ -243,7 +307,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          completed?: boolean
+          completed?: boolean | null
           created_at?: string | null
           depth_level?: string | null
           description?: string | null
@@ -338,7 +402,7 @@ export type Database = {
       }
       modules: {
         Row: {
-          completed: boolean
+          completed: boolean | null
           created_at: string | null
           description: string | null
           id: string
@@ -348,7 +412,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          completed?: boolean
+          completed?: boolean | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -358,7 +422,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          completed?: boolean
+          completed?: boolean | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -382,7 +446,7 @@ export type Database = {
           created_at: string | null
           id: string
           objective_id: string
-          reviewed: boolean
+          reviewed: boolean | null
           specific_context: Json | null
           title: string
           type: string
@@ -393,7 +457,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           objective_id: string
-          reviewed?: boolean
+          reviewed?: boolean | null
           specific_context?: Json | null
           title: string
           type: string
@@ -404,7 +468,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           objective_id?: string
-          reviewed?: boolean
+          reviewed?: boolean | null
           specific_context?: Json | null
           title?: string
           type?: string
