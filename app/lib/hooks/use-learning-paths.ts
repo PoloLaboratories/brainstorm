@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 
-type LearningPath = Database['public']['Tables']['learning_paths']['Row'];
 type LearningPathInsert = Database['public']['Tables']['learning_paths']['Insert'];
 type LearningPathUpdate = Database['public']['Tables']['learning_paths']['Update'];
 

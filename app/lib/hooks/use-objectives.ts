@@ -12,7 +12,7 @@ export function useCreateObjective(pathId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (objective: { title: string; description?: string | null; depth_level?: string; module_id?: string | null }) => {
+    mutationFn: async (objective: Omit<ObjectiveInsert, 'path_id'>) => {
       const { data, error } = await supabase
         .from('learning_objectives')
         .insert({ path_id: pathId, ...objective })

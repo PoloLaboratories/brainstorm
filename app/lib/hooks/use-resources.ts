@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 
 type ResourceInsert = Database['public']['Tables']['resources']['Insert'];
+type ResourceUpdate = Database['public']['Tables']['resources']['Update'];
 
 export function useCreateResource(pathId: string) {
   const supabase = createClient();
@@ -51,7 +52,7 @@ export function useUpdateResource(pathId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; title?: string; url?: string; why_relevant?: string; type?: string }) => {
+    mutationFn: async ({ id, ...updates }: ResourceUpdate & { id: string }) => {
       const { data, error } = await supabase
         .from('resources')
         .update(updates)
