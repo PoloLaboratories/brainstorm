@@ -23,7 +23,7 @@ import { useCreateObjective } from '@/lib/hooks/use-objectives';
 
 interface CreateObjectiveDialogProps {
   pathId: string;
-  moduleId: string;
+  moduleId: string | null;
   children: React.ReactNode;
 }
 
