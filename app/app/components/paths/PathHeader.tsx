@@ -53,7 +53,11 @@ function InlineEdit({ value, onSave, className, multiline, placeholder }: { valu
     };
 
     if (multiline) {
-      return <textarea {...sharedProps} rows={3} className={`${sharedProps.className} resize-none rounded-md border border-[var(--amber)]/40 px-2 py-1`} />;
+      return (
+        <div className="w-full">
+          <textarea {...sharedProps} rows={3} className={`${sharedProps.className} resize-none rounded-md border border-[var(--amber)]/40 px-2 py-1 block w-full`} />
+        </div>
+      );
     }
     return <input {...sharedProps} />;
   }
@@ -69,10 +73,27 @@ function InlineEdit({ value, onSave, className, multiline, placeholder }: { valu
     );
   }
 
+  if (multiline) {
+    return (
+      <div className="w-full group/edit">
+        <div
+          className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${className ?? ''}`}
+          onClick={() => { setDraft(value); setEditing(true); }}
+        >
+          {value}
+          <Pencil
+            className="inline-block ml-1.5 h-3 w-3 text-muted-foreground/0 group-hover/edit:text-muted-foreground/60 transition-colors cursor-pointer"
+            onClick={() => { setDraft(value); setEditing(true); }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <span className={`${multiline ? 'flex' : 'inline-flex'} items-center gap-1.5 group/edit ${multiline ? 'w-full' : ''}`}>
+    <span className="inline-flex items-center gap-1.5 group/edit">
       <span
-        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${multiline ? 'flex-1' : ''} ${className ?? ''}`}
+        className={`cursor-pointer hover:text-[var(--amber)] transition-colors ${className ?? ''}`}
         onClick={() => { setDraft(value); setEditing(true); }}
       >
         {value}
