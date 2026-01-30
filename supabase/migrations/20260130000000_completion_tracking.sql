@@ -32,3 +32,16 @@ CREATE POLICY "Users can CRUD own objectives"
       AND learning_paths.user_id = auth.uid()
     )
   );
+
+-- Update resources RLS to use path_id (old policy joined through module_id which is now nullable)
+DROP POLICY IF EXISTS "Users can CRUD own resources" ON resources;
+CREATE POLICY "Users can CRUD own resources"
+  ON resources FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM learning_objectives
+      JOIN learning_paths ON learning_paths.id = learning_objectives.path_id
+      WHERE resources.objective_id = learning_objectives.id
+      AND learning_paths.user_id = auth.uid()
+    )
+  );
