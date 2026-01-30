@@ -6,6 +6,7 @@ import {
   Sparkles,
   LayoutDashboard,
   BookOpen,
+  Brain,
   GraduationCap,
   Network,
   Lightbulb,
@@ -30,6 +31,7 @@ import { signOut } from '@/app/actions/auth';
 const navItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Learning Paths', href: '/paths', icon: BookOpen },
+  { title: 'Concepts', href: '/concepts', icon: Brain },
   { title: 'Evaluations', href: '/evaluations', icon: GraduationCap },
   { title: 'Knowledge Graph', href: '/graph', icon: Network },
   { title: 'Ideas', href: '/ideas', icon: Lightbulb },
