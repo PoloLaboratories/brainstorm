@@ -14,18 +14,26 @@ export function useGraphData() {
       const edges: GraphEdge[] = [];
       const nodeIds = new Set<string>();
 
-      // Fetch concepts and objectives in parallel
-      const [conceptsRes, objectivesRes, conceptObjectivesRes, graphEdgesRes] = await Promise.all([
+      // Fetch all data in parallel
+      const [
+        conceptsRes,
+        objectivesRes,
+        conceptObjectivesRes,
+        conceptModulesRes,
+        conceptPathsRes,
+      ] = await Promise.all([
         supabase.from('concepts').select('id, name'),
-        supabase.from('learning_objectives').select('id, title'),
+        supabase.from('learning_objectives').select('id, title, module_id, path_id'),
         supabase.from('concept_objectives').select('concept_id, objective_id'),
-        supabase.from('graph_edges').select('source_id, source_type, target_id, target_type'),
+        supabase.from('concept_modules').select('concept_id, module_id'),
+        supabase.from('concept_paths').select('concept_id, path_id'),
       ]);
 
       if (conceptsRes.error) throw conceptsRes.error;
       if (objectivesRes.error) throw objectivesRes.error;
       if (conceptObjectivesRes.error) throw conceptObjectivesRes.error;
-      if (graphEdgesRes.error) throw graphEdgesRes.error;
+      if (conceptModulesRes.error) throw conceptModulesRes.error;
+      if (conceptPathsRes.error) throw conceptPathsRes.error;
 
       // Concept nodes
       for (const c of conceptsRes.data) {
@@ -39,22 +47,49 @@ export function useGraphData() {
         nodeIds.add(o.id);
       }
 
-      // Edges from concept_objectives junction
+      // Build lookup maps for transitive edges
+      const objectivesByModule = new Map<string, string[]>();
+      const objectivesByPath = new Map<string, string[]>();
+      for (const o of objectivesRes.data) {
+        if (o.module_id) {
+          const arr = objectivesByModule.get(o.module_id) ?? [];
+          arr.push(o.id);
+          objectivesByModule.set(o.module_id, arr);
+        }
+        if (o.path_id) {
+          const arr = objectivesByPath.get(o.path_id) ?? [];
+          arr.push(o.id);
+          objectivesByPath.set(o.path_id, arr);
+        }
+      }
+
       const edgeSet = new Set<string>();
-      for (const co of conceptObjectivesRes.data) {
-        const key = `${co.concept_id}->${co.objective_id}`;
-        if (!edgeSet.has(key) && nodeIds.has(co.concept_id) && nodeIds.has(co.objective_id)) {
-          edges.push({ source: co.concept_id, target: co.objective_id });
+      function addEdge(source: string, target: string) {
+        const key = `${source}->${target}`;
+        if (!edgeSet.has(key) && nodeIds.has(source) && nodeIds.has(target)) {
+          edges.push({ source, target });
           edgeSet.add(key);
         }
       }
 
-      // Explicit graph_edges (filtered to existing nodes)
-      for (const ge of graphEdgesRes.data) {
-        const key = `${ge.source_id}->${ge.target_id}`;
-        if (!edgeSet.has(key) && nodeIds.has(ge.source_id) && nodeIds.has(ge.target_id)) {
-          edges.push({ source: ge.source_id, target: ge.target_id });
-          edgeSet.add(key);
+      // Direct: concept ↔ objective
+      for (const co of conceptObjectivesRes.data) {
+        addEdge(co.concept_id, co.objective_id);
+      }
+
+      // Transitive via module: concept → module → objectives in that module
+      for (const cm of conceptModulesRes.data) {
+        const objIds = objectivesByModule.get(cm.module_id) ?? [];
+        for (const objId of objIds) {
+          addEdge(cm.concept_id, objId);
+        }
+      }
+
+      // Transitive via path: concept → path → objectives in that path
+      for (const cp of conceptPathsRes.data) {
+        const objIds = objectivesByPath.get(cp.path_id) ?? [];
+        for (const objId of objIds) {
+          addEdge(cp.concept_id, objId);
         }
       }
 
