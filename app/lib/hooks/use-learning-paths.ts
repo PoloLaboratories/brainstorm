@@ -41,13 +41,23 @@ export function useLearningPath(id: string) {
               *,
               resources (*)
             )
+          ),
+          learning_objectives!learning_objectives_path_id_fkey (
+            *,
+            resources (*)
           )
         `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return data;
+
+      // Separate path-level objectives (no module) from module objectives
+      const pathObjectives = (data as any).learning_objectives?.filter(
+        (o: any) => o.module_id === null
+      ) ?? [];
+
+      return { ...data, pathObjectives };
     },
     enabled: !!id,
   });
