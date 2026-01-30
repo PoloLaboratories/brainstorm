@@ -99,3 +99,22 @@ export function useUpdateLearningPath() {
     },
   });
 }
+
+export function useDeleteLearningPath() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('learning_paths')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-paths'] });
+    },
+  });
+}
