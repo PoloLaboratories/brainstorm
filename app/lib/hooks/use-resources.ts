@@ -46,6 +46,28 @@ export function useDeleteResource(pathId: string) {
   });
 }
 
+export function useUpdateResource(pathId: string) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; title?: string; url?: string; why_relevant?: string; type?: string }) => {
+      const { data, error } = await supabase
+        .from('resources')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['learning-paths', pathId] });
+    },
+  });
+}
+
 export function useToggleResourceReviewed(pathId: string) {
   const supabase = createClient();
   const queryClient = useQueryClient();

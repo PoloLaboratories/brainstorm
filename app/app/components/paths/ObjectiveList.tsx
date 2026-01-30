@@ -1,6 +1,6 @@
 'use client';
 
-import { Target, Plus, Trash2, CheckCircle2, Circle, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { Target, Plus, Trash2, CheckCircle2, Circle, AlertTriangle, ArrowRightLeft, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -24,7 +24,7 @@ import { DepthBadge } from './DepthBadge';
 import { ResourceList } from './ResourceList';
 import { CreateObjectiveDialog } from './CreateObjectiveDialog';
 import { AddResourceDialog } from './AddResourceDialog';
-import { useDeleteObjective, useToggleObjectiveCompleted, useMoveObjectiveToModule } from '@/lib/hooks/use-objectives';
+import { useDeleteObjective, useUpdateObjective, useToggleObjectiveCompleted, useMoveObjectiveToModule } from '@/lib/hooks/use-objectives';
 import { Database } from '@/types/database';
 
 type Objective = Database['public']['Tables']['learning_objectives']['Row'];
@@ -45,10 +45,13 @@ interface ObjectiveListProps {
 
 export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllCompleted }: ObjectiveListProps) {
   const deleteObjective = useDeleteObjective(pathId);
+  const updateObjective = useUpdateObjective(pathId);
   const toggleCompleted = useToggleObjectiveCompleted(pathId);
   const moveObjective = useMoveObjectiveToModule(pathId);
   const [warningObjectiveId, setWarningObjectiveId] = useState<string | null>(null);
   const [movingObjectiveId, setMovingObjectiveId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
 
   function handleToggleCompleted(obj: Objective & { resources: Resource[] }) {
     const newCompleted = !obj.completed;
@@ -125,9 +128,35 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
               </button>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-sm font-medium ${obj.completed ? 'line-through opacity-60' : ''}`}>
-                    {obj.title}
-                  </span>
+                  {editingId === obj.id ? (
+                    <input
+                      className="text-sm font-medium bg-transparent border-b border-[var(--amber)] outline-none py-0.5 min-w-[120px]"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && editTitle.trim()) {
+                          updateObjective.mutate({ id: obj.id, title: editTitle.trim() });
+                          setEditingId(null);
+                        }
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                      onBlur={() => {
+                        if (editTitle.trim() && editTitle.trim() !== obj.title) {
+                          updateObjective.mutate({ id: obj.id, title: editTitle.trim() });
+                        }
+                        setEditingId(null);
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      className={`text-sm font-medium cursor-pointer hover:text-[var(--amber)] transition-colors ${obj.completed ? 'line-through opacity-60' : ''}`}
+                      onClick={() => { setEditingId(obj.id); setEditTitle(obj.title); }}
+                      title="Click to edit"
+                    >
+                      {obj.title}
+                    </span>
+                  )}
                   <DepthBadge depth={obj.depth_level as 'survey' | 'intermediate' | 'deep'} />
                   {modules && modules.length > 0 && (
                     movingObjectiveId === obj.id ? (
