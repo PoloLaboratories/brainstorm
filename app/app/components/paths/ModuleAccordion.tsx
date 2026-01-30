@@ -13,6 +13,7 @@ import { StatusBadge } from './StatusBadge';
 import { ObjectiveList } from './ObjectiveList';
 import { CreateModuleDialog } from './CreateModuleDialog';
 import { useDeleteModule, useUpdateModule, useToggleModuleCompleted } from '@/lib/hooks/use-modules';
+import { ConceptTagList } from '@/app/components/concepts/ConceptTagList';
 import { Database } from '@/types/database';
 
 type Module = Database['public']['Tables']['modules']['Row'];
@@ -194,6 +195,9 @@ export function ModuleAccordion({ modules, pathId }: ModuleAccordionProps) {
                   </div>
                 </div>
                 <AccordionContent className="px-5 pb-5">
+                  <div className="mb-3">
+                    <ConceptTagList entityType="module" entityId={mod.id} />
+                  </div>
                   {mod.completed ? (
                     mod.description && (
                       <div className="mb-4">

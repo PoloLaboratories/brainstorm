@@ -8,6 +8,7 @@ import { PathHeader } from '@/app/components/paths/PathHeader';
 import { ModuleAccordion } from '@/app/components/paths/ModuleAccordion';
 import { ObjectiveList } from '@/app/components/paths/ObjectiveList';
 import { Target } from 'lucide-react';
+import { ConceptTagList } from '@/app/components/concepts/ConceptTagList';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -53,6 +54,11 @@ export default function PathDetailPage({ params }: { params: Promise<{ id: strin
       className="space-y-8 max-w-4xl"
     >
       <PathHeader path={path} />
+
+      {/* Path-level concepts */}
+      <div className="mt-2">
+        <ConceptTagList entityType="path" entityId={path.id} />
+      </div>
 
       {/* Path-level objectives */}
       <motion.div

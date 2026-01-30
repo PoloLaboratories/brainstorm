@@ -25,6 +25,7 @@ import { ResourceList } from './ResourceList';
 import { CreateObjectiveDialog } from './CreateObjectiveDialog';
 import { AddResourceDialog } from './AddResourceDialog';
 import { useDeleteObjective, useUpdateObjective, useToggleObjectiveCompleted, useMoveObjectiveToModule } from '@/lib/hooks/use-objectives';
+import { ConceptTagList } from '@/app/components/concepts/ConceptTagList';
 import { Database } from '@/types/database';
 
 type Objective = Database['public']['Tables']['learning_objectives']['Row'];
@@ -280,6 +281,9 @@ export function ObjectiveList({ objectives, pathId, moduleId, modules, onAllComp
             {/* Collapsible content */}
             {isExpanded && (
               <div className="px-4 pb-4 pl-11">
+                <div className="mb-2">
+                  <ConceptTagList entityType="objective" entityId={obj.id} />
+                </div>
                 {obj.completed ? (
                   obj.description && (
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed opacity-60">{obj.description}</p>
